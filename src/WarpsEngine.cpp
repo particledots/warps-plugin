@@ -1,17 +1,32 @@
 #include "WarpsEngine.h"
 #include <algorithm>
 #include <cmath>
+#include <cstring>
+#include <new>
 #include "warps/dsp/modulator.h"
 #include "warps/resources.h"
 #include "stmlib/dsp/dsp.h"
 
-WarpsEngine::WarpsEngine() : mod (new warps::Modulator()) {}
+namespace
+{
+    // The firmware's modulator lives in global memory, which the chip zeroes at start-up, and parts of Warps
+    // (for example the input noise gate's level) are never initialised by the code itself. So hand it zeroed memory too.
+    template <class T> T* newZeroed()
+    {
+        void* m = ::operator new (sizeof (T));
+        std::memset (m, 0, sizeof (T));
+        return new (m) T();
+    }
+}
+
+WarpsEngine::WarpsEngine() {}
 WarpsEngine::~WarpsEngine() = default;
 
 void WarpsEngine::prepare (double sr)
 {
     hostRate = sr;
     procRate = 96000.0;
+    mod.reset (newZeroed<warps::Modulator>());   // fresh, zeroed state every time we (re)prepare
     mod->Init (96000.0f);
     rsInC.init (hostRate, procRate);   rsInM.init (hostRate, procRate);
     rsOutMain.init (procRate, hostRate); rsOutAux.init (procRate, hostRate);

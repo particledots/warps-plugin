@@ -92,6 +92,33 @@ WarpsEditor::WarpsEditor (WarpsAudioProcessor& p) : AudioProcessorEditor (&p), p
     addAndMakeVisible (followMidi);
     followAtt = std::make_unique<ButtonAtt> (proc.apvts, "follow_midi", followMidi);
 
+    addMenu (pitchSnap, "pitch_snap", "PITCH SNAP", { "Off", "Steps", "Semitones" });
+    pitchSnap.box.setTooltip ("What the internal oscillator's pitch settles on (Carrier 1-3 only: the External carrier has no pitch). "
+                              "Steps = octaves and fifths (0, 7, 12, 19, 24 ... up to 127); Semitones = whole semitones. "
+                              "With Osc Follows MIDI on, the played note is left alone and only Osc Tune snaps (0, +-7, +-12 with Steps). "
+                              "With it off, Osc Note + Osc Tune snap as one note, and the Osc Note readout shows it.");
+    // Readouts show what actually plays. Following MIDI: Osc Tune shows its snapped value. Not following: Osc Note shows the
+    // snapped note (Osc Note + Osc Tune).
+    auto snapMode = [this] { return (int) proc.apvts.getRawParameterValue ("pitch_snap")->load(); };
+    auto follows  = [this] { return proc.apvts.getRawParameterValue ("follow_midi")->load() > 0.5f; };
+    oscTune.slider.textFromValueFunction = [snapMode, follows] (double v)
+    {
+        if (snapMode() == WarpsEngine::SnapOff || ! follows()) return juce::String (v, 2);
+        const int st = (int) std::lround (WarpsEngine::snapPitch ((float) v, snapMode()));
+        return st > 0 ? "+" + juce::String (st) : juce::String (st);
+    };
+    oscNote.slider.textFromValueFunction = [this, snapMode, follows] (double v)
+    {
+        if (snapMode() == WarpsEngine::SnapOff || follows()) return juce::String (v, 2);
+        const float total = (float) v + proc.apvts.getRawParameterValue ("osc_tune")->load();
+        return juce::String ((int) std::lround (WarpsEngine::snapPitch (total, snapMode())));
+    };
+    auto refresh = [this] (float) { oscNote.slider.updateText(); oscTune.slider.updateText(); };
+    snapReadoutAtt   = std::make_unique<juce::ParameterAttachment> (*proc.apvts.getParameter ("pitch_snap"), refresh);
+    followReadoutAtt = std::make_unique<juce::ParameterAttachment> (*proc.apvts.getParameter ("follow_midi"), refresh);
+    tuneReadoutAtt   = std::make_unique<juce::ParameterAttachment> (*proc.apvts.getParameter ("osc_tune"), refresh);
+    snapReadoutAtt->sendInitialUpdate();
+
     setSize (620, 470);
 }
 
@@ -162,7 +189,9 @@ void WarpsEditor::resized()
     // Row 2: internal oscillator pitch
     place (oscNote, juce::Rectangle<int> (12, 220, colW, 112).reduced (14, 0));
     place (oscTune, juce::Rectangle<int> (12 + colW, 220, colW, 112).reduced (14, 0));
-    followMidi.setBounds (12 + 2 * colW + 14, 262, colW * 2 - 28, 34);
+    followMidi.setBounds (12 + 2 * colW + 14, 228, colW * 2 - 28, 34);
+    pitchSnap.label.setBounds (12 + 2 * colW + 14, 272, colW * 2 - 28, 16);
+    pitchSnap.box.setBounds   (12 + 2 * colW + 14, 290, colW * 2 - 28, 26);
 
     // Row 3: menus, two per line
     const int halfW = (W - 24 - 36) / 2;

@@ -46,7 +46,8 @@ private:
     WarpsLookAndFeel laf;
 
     Knob level1, level2, algorithm, timbre, oscNote, oscTune;
-    Menu carrier, mode, source, output;
+    Menu carrier, mode, source, output, pitchSnap;
+    std::unique_ptr<juce::ParameterAttachment> snapReadoutAtt, followReadoutAtt, tuneReadoutAtt;   // keep the pitch readouts in step
     juce::ToggleButton followMidi { "OSC FOLLOWS MIDI" };
     std::unique_ptr<ButtonAtt> followAtt;
 

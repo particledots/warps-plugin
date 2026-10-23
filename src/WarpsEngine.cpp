@@ -19,6 +19,25 @@ namespace
     }
 }
 
+float WarpsEngine::snapPitch (float semitones, int mode)
+{
+    if (mode == SnapSemitones) return std::round (semitones);
+    if (mode != SnapSteps) return semitones;
+    static const float kSteps[] = { 0.f, 7.f, 12.f, 19.f, 24.f, 31.f, 36.f, 43.f, 48.f, 55.f, 60.f, 67.f, 72.f, 79.f, 84.f,
+                                    91.f, 96.f, 103.f, 108.f, 115.f, 120.f, 127.f };   // mirrored below zero
+    const float a = std::fabs (semitones);
+    float best = kSteps[0];
+    for (float d : kSteps)
+        if (std::fabs (a - d) < std::fabs (a - best)) best = d;
+    return semitones < 0.f ? -best : best;
+}
+
+float WarpsEngine::oscPitch (float baseNote, float tune, bool followsMidi, int snapMode)
+{
+    if (snapMode == SnapOff) return baseNote + tune;
+    return followsMidi ? baseNote + snapPitch (tune, snapMode) : snapPitch (baseNote + tune, snapMode);
+}
+
 WarpsEngine::WarpsEngine() {}
 WarpsEngine::~WarpsEngine() = default;
 

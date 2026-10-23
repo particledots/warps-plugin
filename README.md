@@ -46,6 +46,7 @@ oscillator, and the oscillator is pitched by **Osc Note** + **Osc Tune** (or by 
 | Carrier | External, or one of the three internal oscillator shapes (the module's switch) |
 | Mode | Normal, or the module's hidden frequency-shifter mode |
 | Osc Note / Osc Tune / Osc Follows MIDI | pitch of the internal oscillator (on the module this is the Level 1 knob / V/oct input) |
+| Pitch Snap (our addition, 0.2.0) | Off / Steps (octaves and fifths) / Semitones for the internal oscillator's pitch. Following MIDI: only Osc Tune snaps (the played note is untouched); not following: Osc Note + Osc Tune snap as one note. Off is exactly the 0.1.0 sound. No effect with the External carrier (it has no pitch) |
 
 At the very top of the Algorithm knob the vocoder **freezes** the spectrum it has captured (upstream behaviour). From a cold start it is silent
 until the vocoder has heard something, so turn the knob up to just below the top first, then to the top.

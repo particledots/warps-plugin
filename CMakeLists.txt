@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(WarpsPlugin VERSION 0.1.0)
+project(WarpsPlugin VERSION 0.2.0)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -66,3 +66,13 @@ target_link_libraries(Warps PRIVATE
 # --- Headless test of the DSP wrapper:  cmake --build build --target engine_test && build/engine_test ---
 add_executable(engine_test EXCLUDE_FROM_ALL src/engine_test.cpp)
 target_link_libraries(engine_test PRIVATE warps_core)
+
+# --- Pitch Snap test (function, the oscillator's pitch, all carriers; JUCE-free):
+#     cmake --build build --target pitch_snap_test && build/pitch_snap_test ---
+add_executable(pitch_snap_test EXCLUDE_FROM_ALL src/pitch_snap_test.cpp)
+target_link_libraries(pitch_snap_test PRIVATE warps_core)
+
+# --- Processor-level test (the real parameters -> engine wiring, MIDI, state; no host or window):  build/plugin_test ---
+add_executable(plugin_test EXCLUDE_FROM_ALL src/plugin_test.cpp)
+target_compile_definitions(plugin_test PRIVATE JucePlugin_Name="Unofficial Warps" JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0)
+target_link_libraries(plugin_test PRIVATE Warps juce::juce_audio_utils juce::juce_recommended_config_flags)

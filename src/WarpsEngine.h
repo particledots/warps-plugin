@@ -14,6 +14,19 @@ public:
     enum Carrier { External = 0, Internal1 = 1, Internal2 = 2, Internal3 = 3 };
     enum Mode { Normal = 0, FrequencyShifter = 1 };
 
+    // Pitch Snap (our addition, not in the module). It only has an audible effect with an internal carrier (Carrier 1-3): the
+    // note only drives the internal oscillator.
+    //   Steps     - octaves and fifths: 0, 7, 12, 19, 24, ... up to 127 (both signs). Counted from note 0 (a C), so every octave is
+    //               a C and every step in between is the G above it. Osc Tune (+-12) therefore lands on 0, +-7 or +-12.
+    //   Semitones - whole semitones
+    enum PitchSnap { SnapOff = 0, SnapSteps = 1, SnapSemitones = 2 };
+    static float snapPitch (float semitones, int mode);   // Off returns its input unchanged
+
+    // The internal oscillator's note. baseNote is the last MIDI note when Osc Follows MIDI is on (and a note has arrived), else
+    // Osc Note. Off: baseNote + tune, exactly as before. Snap on and following MIDI: the played note stays as it is and only Osc
+    // Tune snaps. Snap on and not following: Osc Note + Osc Tune snap as one note.
+    static float oscPitch (float baseNote, float tune, bool followsMidi, int snapMode);
+
     struct Params
     {
         // Same meaning as the module's controls (all knobs 0..1 unless noted).

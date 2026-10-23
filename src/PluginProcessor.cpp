@@ -25,6 +25,9 @@ juce::AudioProcessorValueTreeState::ParameterLayout WarpsAudioProcessor::createL
                  juce::NormalisableRange<float> (-12.f, 12.f, 0.01f), 0.f,
                  juce::AudioParameterFloatAttributes().withLabel ("st")));
     p.push_back (std::make_unique<APB> (juce::ParameterID { "follow_midi", 1 }, "Osc Follows MIDI", true));
+    // Added in 0.2.0. Off = exactly the 0.1.0 sound; old projects load with it Off.
+    p.push_back (std::make_unique<APC> (juce::ParameterID { "pitch_snap", 2 }, "Pitch Snap",
+                 juce::StringArray { "Off", "Steps", "Semitones" }, 0));
     p.push_back (std::make_unique<APC> (juce::ParameterID { "carrier", 1 }, "Carrier",
                  juce::StringArray { "External", "Internal 1 (sine / saw)", "Internal 2 (triangle / pulse)", "Internal 3 (saw / noise)" }, 0));
     p.push_back (std::make_unique<APC> (juce::ParameterID { "mode", 1 }, "Mode",
@@ -94,7 +97,8 @@ void WarpsAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::
     prm.carrier = (int) v ("carrier");
     prm.mode = (int) v ("mode");
     const bool follow = v ("follow_midi") > 0.5f;
-    prm.oscNote = ((follow && lastMidiNote >= 0) ? (float) lastMidiNote : v ("osc_note")) + v ("osc_tune");
+    prm.oscNote = WarpsEngine::oscPitch ((follow && lastMidiNote >= 0) ? (float) lastMidiNote : v ("osc_note"), v ("osc_tune"),
+                                         follow, (int) v ("pitch_snap"));
 
     // Work out where the module's two inputs come from.
     auto mainIn = getBusBuffer (buffer, true, 0);
